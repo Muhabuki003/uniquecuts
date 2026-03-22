@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unique Cuts — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --panel: #111111;
+    --border: #222;
+    --cream: #f5f0e8;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --mid: #666;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--black); color: var(--cream); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+  }
+  .login-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+  .login-logo { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.05em; line-height: 1; color: var(--cream); margin-bottom: 4px; }
+  .login-logo span { color: var(--gold); }
+  .login-sub { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--mid); margin-bottom: 36px; }
+  .login-field { margin-bottom: 16px; text-align: left; }
+  .login-field label { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); margin-bottom: 8px; }
+  .login-field input { width: 100%; background: var(--black); border: 1px solid var(--border); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 13px 16px; outline: none; transition: border-color 0.2s; }
+  .login-field input:focus { border-color: var(--gold); }
+  .login-btn { width: 100%; margin-top: 8px; padding: 15px; background: var(--gold); border: none; color: var(--black); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
+  .login-btn:hover { background: var(--gold-light); }
+  .login-error { margin-top: 16px; font-size: 12px; color: #e74c3c; display: none; }
+  .login-error.show { display: block; }
+
+  /* ── DASHBOARD ── */
+  .dashboard { display: none; min-height: 100vh; flex-direction: row; }
+  .dashboard.visible { display: flex; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 220px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 100vh; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
+  .sidebar-brand { padding: 28px 24px 24px; border-bottom: 1px solid var(--border); }
+  .sidebar-brand h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.05em; color: var(--cream); line-height: 1; }
+  .sidebar-brand h1 span { color: var(--gold); }
+  .sidebar-brand p { font-size: 10px; color: var(--mid); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px; }
+  nav { padding: 20px 12px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; font-size: 13px; letter-spacing: 0.05em; color: var(--mid); border-radius: 4px; transition: all 0.2s; margin-bottom: 4px; border: 1px solid transparent; }
+  .nav-item:hover { color: var(--cream); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--gold); background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.2); }
+  .nav-item .icon { font-size: 16px; }
+  .nav-logout { margin: 12px; padding: 11px; background: transparent; border: 1px solid var(--border); color: var(--mid); font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; width: calc(100% - 24px); }
+  .nav-logout:hover { border-color: #e74c3c; color: #e74c3c; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--panel); position: sticky; top: 0; z-index: 10; }
+  .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.05em; color: var(--cream); }
+  .date-filter { display: flex; align-items: center; gap: 12px; }
+  .date-filter input { background: var(--black); border: 1px solid var(--border); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 14px; outline: none; color-scheme: dark; }
+  .date-filter input:focus { border-color: var(--gold); }
+  .btn-refresh { background: transparent; border: 1px solid var(--border); color: var(--mid); font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; cursor: pointer; transition: all 0.2s; }
+  .btn-refresh:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── CONTENT ── */
+  .content { padding: 32px; overflow-y: auto; flex: 1; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadeUp 0.3s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── STATS ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); padding: 24px; }
+  .stat-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 44px; color: var(--cream); line-height: 1; }
+  .stat-value.gold { color: var(--gold); }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--panel); border: 1px solid var(--border); }
+  .table-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.05em; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 12px 20px; text-align: left; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid); font-weight: 500; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 14px 20px; vertical-align: middle; color: var(--cream); }
+  .td-sub { color: var(--mid); font-size: 12px; margin-top: 2px; font-weight: 300; }
+
+  /* ── BADGES ── */
+  .badge { display: inline-block; padding: 3px 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; border-radius: 2px; }
+  .badge-pending { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .badge-confirmed { background: rgba(39,174,96,0.12); color: #2ecc71; border: 1px solid rgba(39,174,96,0.3); }
+  .badge-cancelled { background: rgba(192,57,43,0.12); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
+  .badge-completed { background: rgba(255,255,255,0.06); color: var(--mid); border: 1px solid var(--border); }
+
+  /* ── BUTTONS ── */
+  .action-btns { display: flex; gap: 8px; }
+  .act-btn { padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; letter-spacing: 0.08em; cursor: pointer; border-radius: 2px; transition: all 0.2s; border: 1px solid; }
+  .act-confirm { background: transparent; border-color: #2ecc71; color: #2ecc71; }
+  .act-confirm:hover { background: rgba(46,204,113,0.15); }
+  .act-cancel { background: transparent; border-color: #e74c3c; color: #e74c3c; }
+  .act-cancel:hover { background: rgba(231,76,60,0.15); }
+  .act-complete { background: transparent; border-color: var(--mid); color: var(--mid); }
+  .act-complete:hover { background: rgba(255,255,255,0.05); }
+
+  /* ── MGMT CARDS ── */
+  .mgmt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .mgmt-card { background: var(--panel); border: 1px solid var(--border); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .mgmt-info { flex: 1; }
+  .mgmt-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.03em; color: var(--cream); }
+  .mgmt-detail { font-size: 12px; color: var(--mid); margin-top: 4px; font-weight: 300; line-height: 1.5; }
+  .mgmt-price { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--gold); flex-shrink: 0; }
+  .btn-add { background: transparent; border: 1px solid var(--gold); color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; padding: 10px 20px; cursor: pointer; transition: all 0.2s; }
+  .btn-add:hover { background: rgba(201,168,76,0.1); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); padding: 36px; width: 100%; max-width: 460px; animation: fadeUp 0.25s ease; }
+  .modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.05em; margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid); margin-bottom: 8px; }
+  .field input, .field textarea { background: var(--black); border: 1px solid var(--border); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 16px; width: 100%; outline: none; }
+  .field input:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+  .modal-save { flex: 1; padding: 14px; background: var(--gold); border: none; color: var(--black); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
+  .modal-save:hover { background: var(--gold-light); }
+  .modal-cancel { padding: 14px 20px; background: transparent; border: 1px solid var(--border); color: var(--mid); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .modal-cancel:hover { color: var(--cream); }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 60px; color: var(--mid); font-size: 14px; font-weight: 300; }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .sidebar { width: 100%; height: auto; min-height: unset; position: static; }
+    .dashboard.visible { flex-direction: column; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Unique<span>Cuts</span></div>
+    <div class="login-sub">Admin Portal</div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="passwordInput" placeholder="Enter admin password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h1>Unique<span>Cuts</span></h1>
+      <p>Admin Panel</p>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showView('appointments')"><span class="icon">📅</span><span>Appointments</span></div>
+      <div class="nav-item" onclick="showView('barbers')"><span class="icon">✂️</span><span>Barbers</span></div>
+      <div class="nav-item" onclick="showView('services')"><span class="icon">💈</span><span>Services</span></div>
+    </nav>
+    <button class="nav-logout" onclick="doLogout()">Log Out</button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Appointments</div>
+      <div class="date-filter">
+        <input type="date" id="filterDate" onchange="loadAppointments()">
+        <button class="btn-refresh" onclick="refresh()">↺ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- APPOINTMENTS VIEW -->
+      <div class="view active" id="view-appointments">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Shown</div><div class="stat-value" id="stat-today">—</div></div>
+          <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value gold" id="stat-pending">—</div></div>
+          <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-value" id="stat-confirmed">—</div></div>
+          <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value gold" id="stat-revenue">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><div class="table-title">Appointments</div></div>
+          <table>
+            <thead><tr><th>Client</th><th>Barber</th><th>Service</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="apptBody"><tr><td colspan="6" class="empty-state"><span class="spinner"></span> Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BARBERS VIEW -->
+      <div class="view" id="view-barbers">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:24px;">
+          <button class="btn-add" onclick="openBarberModal()">+ Add Barber</button>
+        </div>
+        <div class="mgmt-grid" id="barberCards"><div class="empty-state"><span class="spinner"></span> Loading…</div></div>
+      </div>
+
+      <!-- SERVICES VIEW -->
+      <div class="view" id="view-services">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:24px;">
+          <button class="btn-add" onclick="openServiceModal()">+ Add Service</button>
+        </div>
+        <div class="mgmt-grid" id="serviceCards"><div class="empty-state"><span class="spinner"></span> Loading…</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- BARBER MODAL -->
+<div class="modal-overlay" id="barberModal">
+  <div class="modal">
+    <h2 id="barberModalTitle">Add Barber</h2>
+    <div class="field"><label>Name</label><input id="bName" placeholder="Marcus"></div>
+    <div class="field"><label>Bio</label><textarea id="bBio" placeholder="Short bio…"></textarea></div>
+    <div class="field"><label>Photo URL (optional)</label><input id="bPhoto" placeholder="https://…"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModals()">Cancel</button>
+      <button class="modal-save" onclick="saveBarber()">Save Barber</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal">
+    <h2 id="serviceModalTitle">Add Service</h2>
+    <div class="field"><label>Service Name</label><input id="sName" placeholder="Fade"></div>
+    <div class="field"><label>Description</label><input id="sDesc" placeholder="Smooth skin or low/mid/high fade"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="field"><label>Price ($)</label><input id="sPrice" type="number" placeholder="40"></div>
+      <div class="field"><label>Duration (min)</label><input id="sDur" type="number" placeholder="35"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModals()">Cancel</button>
+      <button class="modal-save" onclick="saveService()">Save Service</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://long-dust-eb37.adrienmuhabukibusiness.workers.dev';
+
+// ────────────────────────────────────────────
+//  CHANGE THIS TO YOUR OWN PASSWORD
+const ADMIN_PASSWORD = 'uniquecuts2024';
+// ────────────────────────────────────────────
+
+function doLogin() {
+  const val = document.getElementById('passwordInput').value;
+  if (val === ADMIN_PASSWORD) {
+    sessionStorage.setItem('uc_admin', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('visible');
+    loadAppointments();
+  } else {
+    document.getElementById('loginError').classList.add('show');
+    document.getElementById('passwordInput').value = '';
+    setTimeout(() => document.getElementById('loginError').classList.remove('show'), 3000);
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('uc_admin');
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('passwordInput').value = '';
+}
+
+// Stay logged in on refresh
+if (sessionStorage.getItem('uc_admin') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').classList.add('visible');
+}
+
+// ── VIEW SWITCHING ──
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelector(`[onclick="showView('${name}')"]`).classList.add('active');
+  document.getElementById('pageTitle').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  document.getElementById('filterDate').style.display = name === 'appointments' ? 'block' : 'none';
+  if (name === 'appointments') loadAppointments();
+  if (name === 'barbers') loadBarbers();
+  if (name === 'services') loadServices();
+}
+
+function refresh() {
+  const active = document.querySelector('.view.active').id.replace('view-', '');
+  showView(active);
+}
+
+// ── APPOINTMENTS ──
+async function loadAppointments() {
+  const date = document.getElementById('filterDate').value;
+  let url = API + '/api/appointments';
+  if (date) url += '?date=' + date;
+  const res = await fetch(url);
+  const appts = await res.json();
+
+  document.getElementById('stat-today').textContent = appts.length;
+  document.getElementById('stat-pending').textContent = appts.filter(a => a.status === 'pending').length;
+  document.getElementById('stat-confirmed').textContent = appts.filter(a => a.status === 'confirmed').length;
+  const revenue = appts.filter(a => a.status !== 'cancelled').reduce((s, a) => s + (a.price || 0), 0);
+  document.getElementById('stat-revenue').textContent = '$' + revenue;
+
+  const tbody = document.getElementById('apptBody');
+  if (!appts.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No appointments found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = appts.map(a => `
+    <tr>
+      <td>
+        <div>${a.client_name}</div>
+        <div class="td-sub">${a.client_phone}</div>
+        ${a.notes ? `<div class="td-sub" style="font-style:italic">${a.notes}</div>` : ''}
+      </td>
+      <td>${a.barber_name}</td>
+      <td><div>${a.service_name}</div><div class="td-sub">$${a.price}</div></td>
+      <td><div>${formatDate(a.appointment_date)}</div><div class="td-sub">${formatTime(a.appointment_time)}</div></td>
+      <td><span class="badge badge-${a.status}">${a.status}</span></td>
+      <td>
+        <div class="action-btns">
+          ${a.status === 'pending' ? `<button class="act-btn act-confirm" onclick="updateStatus(${a.id},'confirmed')">Confirm</button>` : ''}
+          ${a.status !== 'cancelled' && a.status !== 'completed' ? `<button class="act-btn act-complete" onclick="updateStatus(${a.id},'completed')">Done</button>` : ''}
+          ${a.status !== 'cancelled' ? `<button class="act-btn act-cancel" onclick="updateStatus(${a.id},'cancelled')">Cancel</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateStatus(id, status) {
+  await fetch(`${API}/api/appointments/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  loadAppointments();
+}
+
+// ── BARBERS ──
+let editingBarberId = null;
+
+async function loadBarbers() {
+  const res = await fetch(API + '/api/barbers');
+  const barbers = await res.json();
+  const container = document.getElementById('barberCards');
+  if (!barbers.length) { container.innerHTML = '<div class="empty-state">No barbers yet.</div>'; return; }
+  container.innerHTML = barbers.map(b => `
+    <div class="mgmt-card">
+      <div class="mgmt-info">
+        <div class="mgmt-name">${b.name}</div>
+        <div class="mgmt-detail">${b.bio || 'No bio yet.'}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="act-btn act-confirm" onclick='openBarberModal(${JSON.stringify(b)})'>Edit</button>
+        <button class="act-btn act-cancel" onclick="deactivateBarber(${b.id})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openBarberModal(b = null) {
+  editingBarberId = b ? b.id : null;
+  document.getElementById('barberModalTitle').textContent = b ? 'Edit Barber' : 'Add Barber';
+  document.getElementById('bName').value = b ? b.name : '';
+  document.getElementById('bBio').value = b ? (b.bio || '') : '';
+  document.getElementById('bPhoto').value = b ? (b.photo_url || '') : '';
+  document.getElementById('barberModal').classList.add('open');
+}
+
+async function saveBarber() {
+  const name = document.getElementById('bName').value.trim();
+  const bio = document.getElementById('bBio').value.trim();
+  const photo_url = document.getElementById('bPhoto').value.trim();
+  if (!name) { alert('Name required'); return; }
+  if (editingBarberId) {
+    await fetch(`${API}/api/barbers/${editingBarberId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, bio, photo_url, active: 1 }) });
+  } else {
+    await fetch(API + '/api/barbers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, bio, photo_url }) });
+  }
+  closeModals(); loadBarbers();
+}
+
+async function deactivateBarber(id) {
+  if (!confirm('Remove this barber?')) return;
+  await fetch(`${API}/api/barbers/${id}`, { method: 'DELETE' });
+  loadBarbers();
+}
+
+// ── SERVICES ──
+let editingServiceId = null;
+
+async function loadServices() {
+  const res = await fetch(API + '/api/services');
+  const services = await res.json();
+  const container = document.getElementById('serviceCards');
+  if (!services.length) { container.innerHTML = '<div class="empty-state">No services yet.</div>'; return; }
+  container.innerHTML = services.map(s => `
+    <div class="mgmt-card">
+      <div class="mgmt-info">
+        <div class="mgmt-name">${s.name}</div>
+        <div class="mgmt-detail">${s.description || ''}<br>${s.duration_minutes} min</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+        <div class="mgmt-price">$${s.price}</div>
+        <button class="act-btn act-confirm" onclick='openServiceModal(${JSON.stringify(s)})'>Edit</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openServiceModal(s = null) {
+  editingServiceId = s ? s.id : null;
+  document.getElementById('serviceModalTitle').textContent = s ? 'Edit Service' : 'Add Service';
+  document.getElementById('sName').value = s ? s.name : '';
+  document.getElementById('sDesc').value = s ? (s.description || '') : '';
+  document.getElementById('sPrice').value = s ? s.price : '';
+  document.getElementById('sDur').value = s ? s.duration_minutes : '30';
+  document.getElementById('serviceModal').classList.add('open');
+}
+
+async function saveService() {
+  const name = document.getElementById('sName').value.trim();
+  const description = document.getElementById('sDesc').value.trim();
+  const price = parseFloat(document.getElementById('sPrice').value);
+  const duration_minutes = parseInt(document.getElementById('sDur').value);
+  if (!name || isNaN(price)) { alert('Name and price required'); return; }
+  if (editingServiceId) {
+    await fetch(`${API}/api/services/${editingServiceId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, description, price, duration_minutes, active: 1 }) });
+  } else {
+    await fetch(API + '/api/services', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, description, price, duration_minutes }) });
+  }
+  closeModals(); loadServices();
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function formatTime(t) {
+  if (!t) return '—';
+  const [h, m] = t.split(':').map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+// Init
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('filterDate').value = today;
+</script>
+</body>
+</html>
