@@ -2,6 +2,9 @@
 <html lang="en">
 
 <head>
+    <script>
+    const API_BASE_URL = 'https://your-worker.your-subdomain.workers.dev';
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unique Cuts Barbershop | Cypress, TX</title>
@@ -1058,7 +1061,50 @@
         }
     </style>
 </head>
+<script>
+    async function loadSiteData() {
+        try {
+            // Load barbers
+            const barbers = await fetch(`${API_BASE_URL}/api/barbers`).then(r => r.json());
+            const barberContainer = document.querySelector('.team-grid'); // Adjust selector
+            if (barberContainer && barbers.length) {
+                barberContainer.innerHTML = barbers.filter(b => b.is_active).map(b => `
+                    <div class="barber-card">
+                        ${b.image_url ? `<img src="${b.image_url}" alt="${b.name}">` : ''}
+                        <h3>${b.name}</h3>
+                        <p>${b.title}</p>
+                    </div>
+                `).join('');
+            }
 
+            // Load hours
+            const hours = await fetch(`${API_BASE_URL}/api/hours`).then(r => r.json());
+            const hoursContainer = document.querySelector('.hours-grid'); // Adjust selector
+            if (hoursContainer) {
+                hoursContainer.innerHTML = hours.map(h => `
+                    <span>${h.day_name}</span>
+                    <span>${h.is_closed ? 'Closed' : `${h.open_time} - ${h.close_time}`}</span>
+                `).join('');
+            }
+
+            // Load services
+            const services = await fetch(`${API_BASE_URL}/api/services`).then(r => r.json());
+            const servicesContainer = document.querySelector('.services-list'); // Adjust selector
+            if (servicesContainer && services.length) {
+                servicesContainer.innerHTML = services.filter(s => s.is_active).map(s => `
+                    <div class="service-item">
+                        <span>${s.service_name}</span>
+                        <span class="price">$${s.price}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Failed to load site data:', error);
+        }
+    }
+
+    loadSiteData();
+</script>
 <body>
 
     <!-- NAV -->
