@@ -1062,7 +1062,140 @@
     </style>
 </head>
 <script>
-    async function loadSiteData() {
+   /**
+ * DROP THIS SCRIPT INTO index.html
+ * Replace the entire existing <script> block that contains
+ * "async function loadSiteData()" with this content.
+ *
+ * Also make these two small HTML edits:
+ *
+ * 1. Footer "Visit Us" hours <ul>:
+ *    Change: <ul>
+ *    To:     <ul id="footer-hours-list">
+ *    And replace the hardcoded hour <li> items with just:
+ *    <li><span>Loading hours...</span></li>
+ *
+ * 2. CTA booking section hours <div class="info-value">:
+ *    Add <div class="info-value" id="cta-hours-value">Mon–Thu: 10am–8pm<br>Fri–Sat: 9am–9pm · Sun: 10am–5pm</div> to that element so it reads:
+ *    <div class="info-value" <div class="info-value" <div class="info-value" id="cta-hours-value">Mon–Thu: 10am–8pm<br>Fri–Sat: 9am–9pm · Sun: 10am–5pm</div>>Mon–Thu: 10am–8pm<br>Fri–Sat: 9am–9pm · Sun: 10am–5pm</div>>Mon–Thu: 10am–8pm<br>Fri–Sat: 9am–9pm · Sun: 10am–5pm</div>
+ *    (The hardcoded text acts as a fallback if the API is down.)
+ */
+
+async function loadSiteData() {
+    const API_BASE_URL = window.API_BASE_URL || '';
+
+    // ── HELPERS ──────────────────────────────────────────────────
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    function fmt(t) {
+        if (!t) return '';
+        const [h, m] = t.split(':').map(Number);
+        const ampm = h >= 12 ? 'pm' : 'am';
+        const hour = h % 12 || 12;
+        return m === 0 ? `${hour}${ampm}` : `${hour}:${String(m).padStart(2,'0')}${ampm}`;
+    }
+
+    // ── BARBERS ───────────────────────────────────────────────────
+    // Replaces the .team-grid cards with live data from /api/barbers.
+    // Preserves the exact same card HTML/classes as the original design.
+    try {
+        const barbers = await fetch(`${API_BASE_URL}/api/barbers`).then(r => r.json());
+        const teamGrid = document.querySelector('.team-grid');
+        if (teamGrid && Array.isArray(barbers) && barbers.length) {
+            teamGrid.innerHTML = barbers.map(b => {
+                const initials = b.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const avatar = b.photo_url
+                    ? `<img src="${b.photo_url}" alt="${b.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`
+                    : `<div class="team-avatar">${initials}</div>`;
+                return `
+                <div class="team-card">
+                    ${avatar}
+                    <div class="team-name">${b.name}</div>
+                    <div class="team-role">Barber</div>
+                    ${b.bio ? `<p class="team-specialty">${b.bio}</p>` : ''}
+                </div>`;
+            }).join('');
+        }
+    } catch (e) {
+        console.warn('Could not load barbers:', e);
+    }
+
+    // ── SERVICES ──────────────────────────────────────────────────
+    // Replaces the .services-grid cards with live data from /api/services.
+    // Preserves the exact same card HTML/classes as the original design.
+    try {
+        const services = await fetch(`${API_BASE_URL}/api/services`).then(r => r.json());
+        const servicesGrid = document.querySelector('.services-grid');
+        if (servicesGrid && Array.isArray(services) && services.length) {
+            servicesGrid.innerHTML = services.map((s, i) => `
+                <div class="service-card">
+                    <div class="service-number">0${i + 1}</div>
+                    <div class="service-name">${s.name}</div>
+                    <p class="service-desc">${s.description || ''}</p>
+                    <div class="service-price">
+                        <span class="from">from</span>
+                        <span class="amount">$${Number(s.price).toFixed(0)}</span>
+                        ${s.duration_minutes ? `<span class="duration">${s.duration_minutes} min</span>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+    } catch (e) {
+        console.warn('Could not load services:', e);
+    }
+
+    // ── HOURS ─────────────────────────────────────────────────────
+    // Updates footer hours list + CTA hours value from /api/hours.
+    // Requires id="footer-hours-list" on the footer <ul>
+    // and <div class="info-value" > Mon–Thu: 10am–8pm<br>Fri–Sat: 9am–9pm · Sun: 10am–5pm</div> on the CTA hours <div class="info-value">.
+    try {
+        const hours = await fetch(`${API_BASE_URL}/api/hours`).then(r => r.json());
+        if (!Array.isArray(hours) || !hours.length) return;
+
+        // Footer hours list — shows every day individually
+        const footerHoursList = document.getElementById('footer-hours-list');
+        if (footerHoursList) {
+            footerHoursList.innerHTML = hours.map(h => {
+                const day = DAYS[h.day_of_week] || `Day ${h.day_of_week}`;
+                const time = h.is_closed ? 'Closed' : `${fmt(h.open_time)} – ${fmt(h.close_time)}`;
+                return `<li><span>${day}: ${time}</span></li>`;
+            }).join('');
+        }
+
+        // CTA booking section — compact grouped summary
+        const ctaHoursEl = document.getElementById('cta-hours-value');
+        if (ctaHoursEl) {
+            const open = hours.filter(h => !h.is_closed);
+            if (open.length) {
+                // Group consecutive days that share the same open/close times
+                const groups = [];
+                let group = [open[0]];
+                for (let i = 1; i < open.length; i++) {
+                    const prev = open[i - 1], cur = open[i];
+                    const sameTime = cur.open_time === prev.open_time && cur.close_time === prev.close_time;
+                    const consecutive = cur.day_of_week === prev.day_of_week + 1;
+                    if (sameTime && consecutive) {
+                        group.push(cur);
+                    } else {
+                        groups.push(group);
+                        group = [cur];
+                    }
+                }
+                groups.push(group);
+
+                ctaHoursEl.innerHTML = groups.map(g => {
+                    const label = g.length > 1
+                        ? `${DAYS[g[0].day_of_week].slice(0, 3)}–${DAYS[g[g.length - 1].day_of_week].slice(0, 3)}`
+                        : DAYS[g[0].day_of_week].slice(0, 3);
+                    return `${label}: ${fmt(g[0].open_time)}–${fmt(g[0].close_time)}`;
+                }).join('<br>');
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load hours:', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadSiteData); {
         try {
             // Load barbers
             const barbers = await fetch(`${API_BASE_URL}/api/barbers`).then(r => r.json());
@@ -1441,13 +1574,10 @@
             </div>
             <div class="footer-col">
                 <h4>Visit Us</h4>
-                <ul>
-                    <li><span>20510 West Rd, Suite 600</span></li>
-                    <li><span>Cypress, TX 77433</span></li>
-                    <li><a href="tel:2818615804">(281) 861-5804</a></li>
-                    <li><span style="margin-top:8px; display:block;">Mon–Thu: 10am – 8pm</span></li>
-                    <li><span>Fri–Sat: 9am – 9pm</span></li>
-                    <li><span>Sunday: 10am – 5pm</span></li>
+                <ul id="footer-hours-list">
+                    <ul id="footer-hours-list">
+    <li><span>Loading hours...</span></li>
+</ul>
                 </ul>
             </div>
         </div>
